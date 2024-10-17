@@ -68,7 +68,7 @@
       canvas = document.getElementById("qr-canvas");
       gCtx = canvas.getContext("2d");
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } })
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(function(stream) {
           video.srcObject = stream;
           video.setAttribute("playsinline", true); // Required to tell iOS Safari to not go fullscreen
