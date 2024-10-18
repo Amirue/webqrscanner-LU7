@@ -13,62 +13,72 @@
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
-      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      height: 100vh;
       background-color: #f9f9f9;
       overflow: hidden;
     }
 
-    /* Container that holds the blurred video */
-    .video-wrapper {
+    .container {
       position: relative;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
     }
 
-    /* The main video element (blurred background) */
-    .video-bg {
+    /* Video with blur effect, but we'll unmask the center */
+    #videoElement {
       position: absolute;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
       object-fit: cover;
-      filter: blur(15px); /* Apply the blur effect */
+      filter: blur(20px); /* Apply blur to the entire video */
     }
 
-    /* The clear center part of the video */
-    .video-clear {
-      position: relative;
-      width: 60vw; /* Adjust the size of the clear square */
-      height: 60vh;
-      border-radius: 12px;
-      overflow: hidden;
-      z-index: 1;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
+    /* Masking effect to clear the center of the blurred video */
+    #videoMask {
       position: absolute;
-      top: 50px;
-      color: #ffffff;
+      width: 500px; /* Define the size of the clear area */
+      height: 400px;
+      box-shadow: 0 0 0 10000px rgba(0, 0, 0, 0.5); /* Darken the surroundings */
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    /* Clear video inside the mask */
+    #clearVideo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: none; /* No blur for the center */
+    }
+
+    #scan-message {
+      position: absolute;
+      top: 30px;
       font-size: 36px;
       font-weight: 600;
-      z-index: 2;
-      text-align: center;
+      color: white;
+      z-index: 10;
     }
 
     .scan-text {
       position: absolute;
-      bottom: 30px;
+      bottom: 20px;
       font-size: 22px;
       font-weight: 600;
-      color: #ffffff;
-      text-align: center;
-      z-index: 2;
+      color: white;
+      z-index: 10;
     }
 
     /* Popup styles */
@@ -84,6 +94,7 @@
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       font-size: 18px;
+      z-index: 999;
     }
 
     .popup.show {
@@ -95,6 +106,7 @@
       0%, 100% { opacity: 0; }
       10%, 90% { opacity: 1; }
     }
+
   </style>
 
   <!-- Include jsQR library -->
@@ -109,18 +121,24 @@
 
     function load() {
       video = document.createElement("video");
-      const videoBg = document.querySelector(".video-bg");
-      const videoClear = document.querySelector(".video-clear");
+      const clearVideo = document.getElementById("clearVideo");
 
-      videoBg.srcObject = videoClear.srcObject = null; // reset in case of reload
+      canvas = document.createElement("canvas");
+      canvas.width = 500;
+      canvas.height = 400;
+      gCtx = canvas.getContext("2d");
 
       navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } })
       .then(function(stream) {
-          videoBg.srcObject = videoClear.srcObject = stream;
-          videoBg.setAttribute("playsinline", true); // Required to tell iOS Safari to not go fullscreen
-          videoClear.setAttribute("playsinline", true); 
-          videoBg.play();
-          videoClear.play();
+          video.srcObject = stream;
+          clearVideo.srcObject = stream;
+
+          video.setAttribute("playsinline", true); // Required to tell iOS Safari to not go fullscreen
+          clearVideo.setAttribute("playsinline", true);
+
+          video.play();
+          clearVideo.play();
+
           requestAnimationFrame(tick);
       }).catch(function(err) {
           console.error("Error accessing webcam: ", err);
@@ -128,14 +146,11 @@
     }
 
     function tick() {
-      const videoClear = document.querySelector(".video-clear");
-      const canvas = document.createElement("canvas");
-      canvas.width = videoClear.videoWidth;
-      canvas.height = videoClear.videoHeight;
-      gCtx = canvas.getContext("2d");
+      const clearVideo = document.getElementById("clearVideo");
 
-      if (videoClear.readyState === videoClear.HAVE_ENOUGH_DATA) {
-        gCtx.drawImage(videoClear, 0, 0, canvas.width, canvas.height);
+      if (clearVideo.readyState === clearVideo.HAVE_ENOUGH_DATA) {
+        gCtx.drawImage(clearVideo, 0, 0, canvas.width, canvas.height);
+
         imageData = gCtx.getImageData(0, 0, canvas.width, canvas.height);
         let code = jsQR(imageData.data, canvas.width, canvas.height);
 
@@ -149,16 +164,18 @@
 
     function read(data) {
       const checkInURL = "https://launch.investmalaysia.gov.my/check-in";
-
+      
       // Check if the scanned data is a valid check-in URL
       if (data.startsWith(checkInURL)) {
+        // Auto open the valid check-in URL
         window.open(data, "_blank");
       } else {
+        // Show popup for invalid QR
         showPopup();
       }
 
       setTimeout(() => {
-        qrProcessed = false;
+        qrProcessed = false; // Reset the flag after a delay
       }, 3000); // Allow re-scanning after 3 seconds
     }
 
@@ -173,10 +190,17 @@
 </head>
 
 <body onload="load()">
-  <div class="video-wrapper">
-    <h1>SCAN HERE</h1>
-    <video class="video-bg" muted></video>
-    <video class="video-clear"></video>
+  <div class="container">
+    <!-- Blurred video background -->
+    <video id="videoElement" autoplay muted playsinline></video>
+
+    <!-- Clear video in the center -->
+    <div id="videoMask">
+      <video id="clearVideo" autoplay muted playsinline></video>
+    </div>
+
+    <!-- Text overlay -->
+    <div id="scan-message">SCAN HERE</div>
     <div class="scan-text">Align QR Code in front of the camera</div>
   </div>
 
