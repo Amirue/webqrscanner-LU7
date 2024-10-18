@@ -24,8 +24,8 @@
     /* Container that holds the blurred video */
     .video-wrapper {
       position: relative;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -36,17 +36,14 @@
       position: absolute;
       width: 100vw;
       height: 100vh;
-      top: 0;
-      left: 0;
       object-fit: cover;
       filter: blur(15px); /* Apply the blur effect */
-      z-index: -1; /* Ensure it's behind the clear video */
     }
 
     /* The clear center part of the video */
     .video-clear {
       position: relative;
-      width: 60vw;
+      width: 60vw; /* Adjust the size of the clear square */
       height: 60vh;
       border-radius: 12px;
       overflow: hidden;
@@ -56,7 +53,7 @@
 
     h1 {
       position: absolute;
-      top: 10%; /* Move it closer to the clear video */
+      top: 50px;
       color: #ffffff;
       font-size: 36px;
       font-weight: 600;
@@ -66,7 +63,7 @@
 
     .scan-text {
       position: absolute;
-      bottom: 10%; /* Move it closer to the clear video */
+      bottom: 30px;
       font-size: 22px;
       font-weight: 600;
       color: #ffffff;
