@@ -120,7 +120,6 @@
     let gCtx = null;
     let imageData = null;
     let qrProcessed = false; // Flag to prevent multiple scans
-    let qrScanned = false; // Track if any QR code was scanned
 
     function load() {
       video = document.createElement("video");
@@ -147,13 +146,10 @@
         imageData = gCtx.getImageData(0, 0, canvas.width, canvas.height);
         let code = jsQR(imageData.data, canvas.width, canvas.height);
 
-        if (code && !qrProcessed) { // Check if QR has not been processed
-          qrProcessed = true; // Set the flag to prevent further scanning
-          qrScanned = true;  // Mark that a QR code was scanned
+        // Only process if a QR code is detected
+        if (code && !qrProcessed) {
+          qrProcessed = true; // Prevent processing multiple times
           read(code.data);
-        } else if (!code && qrScanned) {
-          // Do nothing when there's no code found, only reset if we processed something
-          console.log("No QR code detected");
         }
       }
       requestAnimationFrame(tick);
@@ -161,20 +157,20 @@
 
     function read(data) {
       const checkInURL = "https://launch.investmalaysia.gov.my/check-in";
-      
+
       // Check if the scanned data is a valid check-in URL
       if (data.startsWith(checkInURL)) {
-        // Auto open the valid check-in URL
+        // Open the valid check-in URL
         window.open(data, "_blank");
       } else {
-        // Show popup for invalid QR
+        // Show popup for invalid QR if a QR was detected, but invalid
         showPopup();
       }
 
+      // Reset the flag after processing
       setTimeout(() => {
-        qrProcessed = false; // Reset the flag after a delay
-        qrScanned = false;   // Reset that a QR code was scanned
-      }, 3000); // Allow re-scanning after 3 seconds
+        qrProcessed = false; // Allow re-scanning after 3 seconds
+      }, 3000);
     }
 
     function showPopup() {
