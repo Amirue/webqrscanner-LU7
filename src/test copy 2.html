@@ -62,14 +62,13 @@
     let canvas = null;
     let gCtx = null;
     let imageData = null;
-    let qrProcessed = false; // Flag to prevent multiple scans
 
     function load() {
       video = document.createElement("video");
       canvas = document.getElementById("qr-canvas");
       gCtx = canvas.getContext("2d");
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } })
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(function(stream) {
           video.srcObject = stream;
           video.setAttribute("playsinline", true); // Required to tell iOS Safari to not go fullscreen
@@ -89,10 +88,9 @@
         imageData = gCtx.getImageData(0, 0, canvas.width, canvas.height);
         let code = jsQR(imageData.data, canvas.width, canvas.height);
 
-        if (code && !qrProcessed) { // Check if QR has not been processed
-          qrProcessed = true; // Set the flag to prevent further scanning
+        if (code) {
           read(code.data);
-        } else if (!code) {
+        } else {
           console.log("QR code not found.");
         }
       }
@@ -106,9 +104,6 @@
       } else {
         document.getElementById("result").innerText = "Scanned Result: " + data;
       }
-      setTimeout(() => {
-        qrProcessed = false; // Reset the flag after a delay
-      }, 3000); // Allow re-scanning after 3 seconds
     }
   </script>
 </head>

@@ -52,6 +52,31 @@
       font-size: 22px;
       font-weight: bold;
     }
+
+    /* Popup styles */
+    .popup {
+      visibility: hidden;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #f44336;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      font-size: 18px;
+    }
+
+    .popup.show {
+      visibility: visible;
+      animation: fadeinout 3s;
+    }
+
+    @keyframes fadeinout {
+      0%, 100% { opacity: 0; }
+      10%, 90% { opacity: 1; }
+    }
   </style>
 
   <!-- Include jsQR library -->
@@ -100,15 +125,30 @@
     }
 
     function read(data) {
-      // Auto open URLs
-      if (data.startsWith("http://") || data.startsWith("https://")) {
-        window.open(data, "_blank"); // Open URL in a new tab
-      } else {
+      const checkInURL = "https://launch.investmalaysia.gov.my/check-in";
+      
+      // Check if the scanned data is a valid check-in URL
+      if (data.startsWith(checkInURL)) {
+        // Auto open the valid check-in URL
+        window.open(data, "_blank");
         document.getElementById("result").innerText = "Scanned Result: " + data;
+      } else {
+        // Show popup for invalid QR
+        showPopup();
+        document.getElementById("result").innerText = "Invalid QR";
       }
+
       setTimeout(() => {
         qrProcessed = false; // Reset the flag after a delay
       }, 3000); // Allow re-scanning after 3 seconds
+    }
+
+    function showPopup() {
+      const popup = document.getElementById("popup");
+      popup.classList.add("show");
+      setTimeout(() => {
+        popup.classList.remove("show");
+      }, 3000); // Auto close popup after 3 seconds
     }
   </script>
 </head>
@@ -121,5 +161,9 @@
     <div class="scan-text">Align QR Code in front of the camera</div>
     <div id="result">Scanned QR code result will appear here.</div>
   </div>
+
+  <!-- Popup for invalid QR -->
+  <div id="popup" class="popup">Invalid QR, try again</div>
+
 </body>
 </html>
