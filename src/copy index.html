@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Scanner</title>
+
+  <!-- Import Montserrat Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f9f9f9;
+    }
+
+    .container {
+      text-align: center;
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      width: 90vw;
+      max-width: 800px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1 {
+      color: #0D3333;
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    #qr-canvas {
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2); /* Drop shadow instead of border */
+      border-radius: 10px;
+      margin-top: 20px;
+      width: 100%;  /* Make the video bigger */
+      max-width: 500px;
+      height: auto;
+    }
+
+    .scan-text {
+      font-size: 22px;
+      font-weight: 600;
+      color: #333;
+      margin-top: 20px;
+    }
+
+    #scan-message {
+      color: #0D3333;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    /* Popup styles */
+    .popup {
+      visibility: hidden;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #f44336;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      font-size: 18px;
+    }
+
+    .popup.show {
+      visibility: visible;
+      animation: fadeinout 3s;
+    }
+
+    @keyframes fadeinout {
+      0%, 100% { opacity: 0; }
+      10%, 90% { opacity: 1; }
+    }
+
+    /* Media queries for responsiveness */
+    @media only screen and (max-width: 768px) {
+      .container {
+        padding: 20px;
+        height: 85vh; /* Adjust for smaller screens */
+      }
+
+      #qr-canvas {
+        max-width: 300px; /* Adjust the size on smaller screens */
+      }
+
+      #scan-message {
+        font-size: 24px; /* Smaller font for small screens */
+      }
+
+      .scan-text {
+        font-size: 20px; /* Smaller font for small screens */
+      }
+    }
+  </style>
+
+  <!-- Include jsQR library -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+  <script>
+    let video = null;
+    let canvas = null;
+    let gCtx = null;
+    let imageData = null;
+    let qrProcessed = false; // Flag to prevent multiple scans
+
+    function load() {
+      video = document.createElement("video");
+      canvas = document.getElementById("qr-canvas");
+      gCtx = canvas.getContext("2d");
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } })
+      .then(function(stream) {
+          video.srcObject = stream;
+          video.setAttribute("playsinline", true); // Required to tell iOS Safari to not go fullscreen
+          video.play();
+          requestAnimationFrame(tick);
+      }).catch(function(err) {
+          console.error("Error accessing webcam: ", err);
+      });
+    }
+
+    function tick() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        gCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        imageData = gCtx.getImageData(0, 0, canvas.width, canvas.height);
+        let code = jsQR(imageData.data, canvas.width, canvas.height);
+
+        if (code && !qrProcessed) { // Check if QR has not been processed
+          qrProcessed = true; // Set the flag to prevent further scanning
+          read(code.data);
+        } else if (!code) {
+          console.log("QR code not found.");
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function read(data) {
+      const checkInURL = "https://launch.investmalaysia.gov.my/check-in";
+      
+      // Check if the scanned data is a valid check-in URL
+      if (data.startsWith(checkInURL)) {
+        // Auto open the valid check-in URL
+        window.open(data, "_blank");
+      } else {
+        // Show popup for invalid QR
+        showPopup();
+      }
+
+      setTimeout(() => {
+        qrProcessed = false; // Reset the flag after a delay
+      }, 3000); // Allow re-scanning after 3 seconds
+    }
+
+    function showPopup() {
+      const popup = document.getElementById("popup");
+      popup.classList.add("show");
+      setTimeout(() => {
+        popup.classList.remove("show");
+      }, 3000); // Auto close popup after 3 seconds
+    }
+  </script>
+</head>
+
+<body onload="load()">
+  <div class="container">
+    <h1>Welcome!</h1>
+    <p id="scan-message">SCAN HERE</p>
+    <canvas id="qr-canvas"></canvas>
+    <div class="scan-text">Align QR Code in front of the camera</div>
+  </div>
+
+  <!-- Popup for invalid QR -->
+  <div id="popup" class="popup">Invalid QR, try again</div>
+
+</body>
+</html>
