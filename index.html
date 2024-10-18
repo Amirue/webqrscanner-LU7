@@ -26,32 +26,43 @@
       padding: 30px;
       border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      width: 90vw;
+      max-width: 800px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
 
     h1 {
-      color: #4CAF50;
+      color: #0D3333;
       font-size: 26px;
       font-weight: 600;
       margin-bottom: 10px;
     }
 
     #qr-canvas {
-      border: 2px solid #4CAF50;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2); /* Drop shadow instead of border */
       border-radius: 10px;
       margin-top: 20px;
+      width: 100%;  /* Make the video bigger */
+      max-width: 500px;
+      height: auto;
     }
 
     .scan-text {
-      font-size: 22px; /* Increased font size */
+      font-size: 22px;
       font-weight: 600;
       color: #333;
       margin-top: 20px;
     }
 
     #scan-message {
-      color: #4CAF50;
-      font-size: 28px; /* Make the SCAN HERE text bigger */
+      color: #0D3333;
+      font-size: 28px;
       font-weight: 600;
+      margin-bottom: 20px;
     }
 
     /* Popup styles */
@@ -77,6 +88,26 @@
     @keyframes fadeinout {
       0%, 100% { opacity: 0; }
       10%, 90% { opacity: 1; }
+    }
+
+    /* Media queries for responsiveness */
+    @media only screen and (max-width: 768px) {
+      .container {
+        padding: 20px;
+        height: 85vh; /* Adjust for smaller screens */
+      }
+
+      #qr-canvas {
+        max-width: 300px; /* Adjust the size on smaller screens */
+      }
+
+      #scan-message {
+        font-size: 24px; /* Smaller font for small screens */
+      }
+
+      .scan-text {
+        font-size: 20px; /* Smaller font for small screens */
+      }
     }
   </style>
 
