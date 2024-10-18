@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR Code Scanner</title>
 
-  <!-- Import Montserrat Font -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
@@ -43,10 +42,10 @@
     }
 
     #qr-canvas {
-      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2); /* Drop shadow instead of border */
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
       border-radius: 10px;
       margin-top: 20px;
-      width: 100%;  /* Make the video bigger */
+      width: 100%;  
       max-width: 500px;
       height: auto;
     }
@@ -65,7 +64,6 @@
       margin-bottom: 20px;
     }
 
-    /* Popup styles */
     .popup {
       visibility: hidden;
       position: fixed;
@@ -90,28 +88,26 @@
       10%, 90% { opacity: 1; }
     }
 
-    /* Media queries for responsiveness */
     @media only screen and (max-width: 768px) {
       .container {
         padding: 20px;
-        height: 85vh; /* Adjust for smaller screens */
+        height: 85vh;
       }
 
       #qr-canvas {
-        max-width: 300px; /* Adjust the size on smaller screens */
+        max-width: 300px;
       }
 
       #scan-message {
-        font-size: 24px; /* Smaller font for small screens */
+        font-size: 24px;
       }
 
       .scan-text {
-        font-size: 20px; /* Smaller font for small screens */
+        font-size: 20px;
       }
     }
   </style>
 
-  <!-- Include jsQR library -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
   <script>
@@ -119,7 +115,7 @@
     let canvas = null;
     let gCtx = null;
     let imageData = null;
-    let qrProcessed = false; // Flag to prevent multiple scans
+    let qrProcessed = false;
 
     function load() {
       video = document.createElement("video");
@@ -129,7 +125,7 @@
       navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } })
       .then(function(stream) {
           video.srcObject = stream;
-          video.setAttribute("playsinline", true); // Required to tell iOS Safari to not go fullscreen
+          video.setAttribute("playsinline", true);
           video.play();
           requestAnimationFrame(tick);
       }).catch(function(err) {
@@ -143,12 +139,18 @@
         canvas.height = video.videoHeight;
         gCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        imageData = gCtx.getImageData(0, 0, canvas.width, canvas.height);
-        let code = jsQR(imageData.data, canvas.width, canvas.height);
+        // Instead of processing the entire frame, you can limit to a specific area
+        // For example, focus on the center of the canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const halfWidth = canvas.width / 4;
+        const halfHeight = canvas.height / 4;
+        
+        imageData = gCtx.getImageData(centerX - halfWidth, centerY - halfHeight, halfWidth * 2, halfHeight * 2);
+        let code = jsQR(imageData.data, halfWidth * 2, halfHeight * 2);
 
-        // Only process if a QR code is detected
         if (code && !qrProcessed) {
-          qrProcessed = true; // Prevent processing multiple times
+          qrProcessed = true;
           read(code.data);
         }
       }
@@ -158,18 +160,14 @@
     function read(data) {
       const checkInURL = "https://launch.investmalaysia.gov.my/check-in";
 
-      // Check if the scanned data is a valid check-in URL
       if (data.startsWith(checkInURL)) {
-        // Open the valid check-in URL
         window.open(data, "_blank");
       } else {
-        // Show popup for invalid QR if a QR was detected, but invalid
         showPopup();
       }
 
-      // Reset the flag after processing
       setTimeout(() => {
-        qrProcessed = false; // Allow re-scanning after 3 seconds
+        qrProcessed = false;
       }, 3000);
     }
 
@@ -178,7 +176,7 @@
       popup.classList.add("show");
       setTimeout(() => {
         popup.classList.remove("show");
-      }, 3000); // Auto close popup after 3 seconds
+      }, 3000);
     }
   </script>
 </head>
@@ -191,8 +189,6 @@
     <div class="scan-text">Align QR Code in front of the camera</div>
   </div>
 
-  <!-- Popup for invalid QR -->
   <div id="popup" class="popup">Invalid QR, try again</div>
-
 </body>
 </html>
