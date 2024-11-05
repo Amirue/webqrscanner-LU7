@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR Code Scanner</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
     body, html {
@@ -108,87 +107,93 @@
     }
   </style>
 
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
-  <script>
-    let video = null;
-    let canvas = null;
-    let gCtx = null;
-    let imageData = null;
-    let qrProcessed = false;
+<script>
+  let video = null;
+  let canvas = null;
+  let gCtx = null;
+  let imageData = null;
+  let qrProcessed = false;
+  let tabOpened = false; // New flag to prevent multiple tabs from opening
 
-    function load() {
-      video = document.createElement("video");
-      canvas = document.getElementById("qr-canvas");
-      gCtx = canvas.getContext("2d");
+  function load() {
+    video = document.createElement("video");
+    canvas = document.getElementById("qr-canvas");
+    gCtx = canvas.getContext("2d");
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } })
-      .then(function(stream) {
-          video.srcObject = stream;
-          video.setAttribute("playsinline", true);
-          video.play();
-          requestAnimationFrame(tick);
-      }).catch(function(err) {
-          console.error("Error accessing webcam: ", err);
-      });
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } })
+    .then(function(stream) {
+        video.srcObject = stream;
+        video.setAttribute("playsinline", true);
+        video.play();
+        requestAnimationFrame(tick);
+    }).catch(function(err) {
+        console.error("Error accessing webcam: ", err);
+    });
+  }
+
+  function tick() {
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      gCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const halfWidth = canvas.width / 4;
+      const halfHeight = canvas.height / 4;
+
+      imageData = gCtx.getImageData(centerX - halfWidth, centerY - halfHeight, halfWidth * 2, halfHeight * 2);
+      let code = jsQR(imageData.data, halfWidth * 2, halfHeight * 2);
+
+      if (code && !qrProcessed) {
+        qrProcessed = true;
+        read(code.data);
+      }
     }
+    requestAnimationFrame(tick);
+  }
 
-    function tick() {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        gCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  function read(data) {
+    const checkInURL = "https://launch.investmalaysia.gov.my/check-in";
 
-        // Instead of processing the entire frame, you can limit to a specific area
-        // For example, focus on the center of the canvas
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const halfWidth = canvas.width / 4;
-        const halfHeight = canvas.height / 4;
-        
-        imageData = gCtx.getImageData(centerX - halfWidth, centerY - halfHeight, halfWidth * 2, halfHeight * 2);
-        let code = jsQR(imageData.data, halfWidth * 2, halfHeight * 2);
+    if (data.startsWith(checkInURL) && !tabOpened) { // Check tabOpened flag
+      tabOpened = true; // Set flag to indicate tab is opened
+      const popupTab = window.open(data, "_blank");
 
-        if (code && !qrProcessed) {
-          qrProcessed = true;
-          read(code.data);
+      // Monitor the tab to detect when it's closed, then reset flags
+      const tabCheckInterval = setInterval(() => {
+        if (popupTab.closed) {
+          clearInterval(tabCheckInterval);
+          tabOpened = false;  // Reset tab flag for future scans
+          qrProcessed = false; // Reset scan flag
         }
-      }
-      requestAnimationFrame(tick);
+      }, 1000);
+    } else {
+      showPopup();
     }
+  }
 
-    function read(data) {
-      const checkInURL = "https://launch.investmalaysia.gov.my/check-in";
-
-      if (data.startsWith(checkInURL)) {
-        window.open(data, "_blank");
-      } else {
-        showPopup();
-      }
-
-      setTimeout(() => {
-        qrProcessed = false;
-      }, 3000);
-    }
-
-    function showPopup() {
-      const popup = document.getElementById("popup");
-      popup.classList.add("show");
-      setTimeout(() => {
-        popup.classList.remove("show");
-      }, 3000);
-    }
-  </script>
+  function showPopup() {
+    const popup = document.getElementById("popup");
+    popup.classList.add("show");
+    setTimeout(() => {
+      popup.classList.remove("show");
+      qrProcessed = false; // Reset scan flag for further attempts
+    }, 3000);
+  }
+</script>
 </head>
 
 <body onload="load()">
-  <div class="container">
-    <h1>Welcome!</h1>
-    <p id="scan-message">SCAN HERE</p>
-    <canvas id="qr-canvas"></canvas>
-    <div class="scan-text">Align QR Code in front of the camera</div>
-  </div>
+<div class="container">
+  <h1>Welcome!</h1>
+  <p id="scan-message">SCAN HERE</p>
+  <canvas id="qr-canvas"></canvas>
+  <div class="scan-text">Align QR Code in front of the camera</div>
+</div>
 
-  <div id="popup" class="popup">Invalid QR, try again</div>
+<div id="popup" class="popup">Invalid QR, try again</div>
 </body>
 </html>
